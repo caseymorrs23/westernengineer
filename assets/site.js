@@ -1,6 +1,32 @@
-(()=>{const toggle=document.querySelector('.menu-toggle'),nav=document.querySelector('.navlinks');if(toggle&&nav){toggle.addEventListener('click',()=>{const opened=nav.classList.toggle('open');toggle.setAttribute('aria-expanded',String(opened));});}const form=document.querySelector('#quote-form');if(form){form.addEventListener('submit',(e)=>{e.preventDefault();const feedback=document.querySelector('#form-feedback');const f=new FormData(form);const v=(k)=>String(f.get(k)||'').trim();const required=['fullName','email','state','service','description'];if(required.some(k=>!v(k))||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('email'))){feedback.textContent='Please complete the required fields and provide a valid email address.';feedback.classList.add('error');return;}feedback.classList.remove('error');const lines=[['Name','fullName'],['Company','company'],['Email','email'],['Phone','phone'],['State','state'],['Project type','service'],['Project location','address'],['Target deadline','deadline'],['Budget range','budget'],['Scope','description']].map(([label,key])=>label+': '+(v(key)||'Not supplied')).join('\n');const subj='New engineering proposal inquiry - '+v('state')+' - '+v('service');const href='mailto:casey@westernengineer.com?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(lines+'\n\nPlease attach available PDFs, equipment schedules, and service photos to this message.');feedback.textContent='Your email application should open with the project details. Attach your plans and press Send to complete the inquiry.';window.location.href=href;});}document.querySelectorAll('a[href^="tel:"]').forEach(a=>a.addEventListener('click',()=>{window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'phone_click'});}));document.querySelectorAll('a[href^="mailto:"]').forEach(a=>a.addEventListener('click',()=>{window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'email_click'});}));})();
-;(()=>{const iconUrl="/assets/logo-symbol.svg",darkIconUrl="/assets/logo-symbol-reversed.svg";
- document.querySelectorAll(".logo > svg").forEach(el=>{const im=document.createElement("img");im.src=el.closest(".footer")?darkIconUrl:iconUrl;im.alt="Western Electrical Engineering lightning W";im.width=51;im.height=51;el.replaceWith(im);});
- document.querySelectorAll('a[href^="mailto:proposals@westernengineer.com"]').forEach(el=>{el.href="mailto:casey@westernengineer.com";if(el.textContent.trim()==="proposals@westernengineer.com")el.textContent="casey@westernengineer.com";});
- document.querySelectorAll('link[rel="icon"]').forEach(el=>el.href="/assets/brand-favicon.svg");
+(()=>{
+const toggle=document.querySelector(".menu-toggle"),nav=document.querySelector(".navlinks");
+if(toggle&&nav)toggle.addEventListener("click",()=>{const open=nav.classList.toggle("open");toggle.setAttribute("aria-expanded",String(open));});
+const form=document.getElementById("quote-form");
+if(form)form.addEventListener("submit",e=>{
+ const f=new FormData(form),v=k=>String(f.get(k)||"").trim();
+ const feedback=document.getElementById("form-feedback");
+ const required=["fullName","email","state","service","description"];
+ if(required.some(k=>!v(k))||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v("email"))){
+  e.preventDefault();
+  if(feedback){feedback.textContent="Please complete the required fields and provide a valid email address.";feedback.classList.add("error");}
+  return;
+ }
+ document.getElementById("lead-name").value=v("fullName");
+ document.getElementById("lead-city").value=v("address")||v("state");
+ const params=new URLSearchParams(location.search);
+ const source=["utm_source","utm_medium","utm_campaign","utm_content","oppref"].filter(k=>params.has(k)).map(k=>k+": "+params.get(k)).join("\n");
+ document.getElementById("lead-project").value=[
+  "Brand: Western Electrical Engineering, PLLC","Company: "+v("company"),"State: "+v("state"),
+  "Project type: "+v("service"),"Location: "+v("address"),"Deadline: "+v("deadline"),
+  "Budget: "+v("budget"),"Project scope: "+v("description"),"Traffic: "+(source||"Unspecified")
+ ].join("\n");
+ if(feedback){feedback.classList.remove("error");feedback.textContent="Submitting your project request…";}
+ const button=form.querySelector("[type=submit]");if(button){button.disabled=true;button.textContent="Submitting…";}
+ window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:"western_form_submit_attempt"});
+});
+document.querySelectorAll(".logo > svg").forEach(el=>{const im=document.createElement("img");im.src=el.closest(".footer")?"/assets/logo-symbol-reversed.svg":"/assets/logo-symbol.svg";im.alt="Western Electrical Engineering lightning W";im.width=51;im.height=51;el.replaceWith(im);});
+document.querySelectorAll('a[href^="mailto:proposals@westernengineer.com"]').forEach(a=>{a.href="mailto:casey@westernengineer.com";if(a.textContent.trim()==="proposals@westernengineer.com")a.textContent="casey@westernengineer.com";});
+document.querySelectorAll('link[rel="icon"]').forEach(a=>a.href="/assets/brand-favicon.svg");
+document.querySelectorAll('a[href^="tel:"]').forEach(a=>a.addEventListener("click",()=>{window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:"western_phone_click"});}));
+document.querySelectorAll('a[href^="mailto:"]').forEach(a=>a.addEventListener("click",()=>{window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:"western_email_click"});}));
 })();
