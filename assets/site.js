@@ -1,6 +1,22 @@
 (()=>{
 const toggle=document.querySelector(".menu-toggle"),nav=document.querySelector(".navlinks");
 if(toggle&&nav)toggle.addEventListener("click",()=>{const open=nav.classList.toggle("open");toggle.setAttribute("aria-expanded",String(open));});
+// Preserve ad-source parameters while a visitor moves between site pages.
+// Only source identifiers are held in this tab's session; no form fields are stored.
+const attributionKeys=["utm_source","utm_medium","utm_campaign","utm_content","utm_term","oppref","gclid","msclkid"];
+const query=new URLSearchParams(location.search);
+const attribution={};
+try{
+ const previous=JSON.parse(sessionStorage.getItem("western_attribution")||"{}");
+ for(const key of attributionKeys){
+  const incoming=query.get(key);
+  if(incoming&&incoming.length<=2048)attribution[key]=incoming;
+  else if(typeof previous[key]==="string")attribution[key]=previous[key];
+ }
+ sessionStorage.setItem("western_attribution",JSON.stringify(attribution));
+}catch(_){
+ for(const key of attributionKeys){const incoming=query.get(key);if(incoming&&incoming.length<=2048)attribution[key]=incoming;}
+}
 const form=document.getElementById("quote-form");
 if(form)form.addEventListener("submit",e=>{
  const f=new FormData(form),v=k=>String(f.get(k)||"").trim();
@@ -13,8 +29,7 @@ if(form)form.addEventListener("submit",e=>{
  }
  document.getElementById("lead-name").value=v("fullName");
  document.getElementById("lead-city").value=v("address")||v("state");
- const params=new URLSearchParams(location.search);
- const source=["utm_source","utm_medium","utm_campaign","utm_content","oppref"].filter(k=>params.has(k)).map(k=>k+": "+params.get(k)).join("\n");
+ const source=attributionKeys.filter(k=>attribution[k]).map(k=>k+": "+attribution[k]).join("\n");
  document.getElementById("lead-project").value=[
   "Brand: Western Electrical Engineering, PLLC","Company: "+v("company"),"State: "+v("state"),
   "Project type: "+v("service"),"Location: "+v("address"),"Deadline: "+v("deadline"),
