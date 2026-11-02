@@ -26,12 +26,12 @@ try{
 }catch(_){
  for(const key of attributionKeys){const incoming=query.get(key);if(incoming&&incoming.length<=2048)attribution[key]=incoming;}
 }
-// TEST-ONLY handoff. The live form keeps its original behavior until the
-// shared Google Apps Script is updated and the verified path passes a real test.
-const verifiedIntakeTest=new URLSearchParams(location.search).get("intake_test")==="1";
+// Use the verified Apps Script handoff for regular quote-form submissions.
+// A matching saved-lead acknowledgement is required before redirecting.
+const verifiedIntakeEnabled=!!document.getElementById("quote-form");
 let testToken="";
 let testConfirmed=false;
-if(verifiedIntakeTest){
+if(verifiedIntakeEnabled){
  const frame=document.createElement("iframe");
  frame.name="western-verified-intake-frame";
  frame.title="Lead submission acknowledgement";
@@ -60,10 +60,9 @@ if(form)form.addEventListener("submit",e=>{
  document.getElementById("lead-name").value=v("fullName");
  document.getElementById("lead-city").value=v("address")||v("state");
  const source=attributionKeys.filter(k=>attribution[k]).map(k=>k+": "+attribution[k]).join("\n");
- if(verifiedIntakeTest){
-  // Route only explicit validation requests to the newly deployed Apps Script.
-  // Production traffic remains on the known-working shared intake endpoint.
-  form.action="https://script.google.com/macros/s/AKfycbyzoTmhY30MNzPnFrC6DuP9GEuZZdUHW3nsk6rYPwORkaq8-mszZd9s9yS-yVhkkDRQlw/exec";
+ if(verifiedIntakeEnabled){
+  // Submit to the shared PNW/Western lead intake and wait for a save acknowledgement.
+  form.action="https://script.google.com/macros/s/AKfycbwi87wMohuWu9zdJ5lzmerR5r_1GL0HhHto0Kh5WIRgtdLTvWkh4oXPVyKLzXEaVRshkA/exec";
   form.target="western-verified-intake-frame";
   const bytes=new Uint8Array(16);
   if(!window.crypto||!window.crypto.getRandomValues){e.preventDefault();if(feedback){feedback.textContent="Secure browser support is required to run this test.";feedback.classList.add("error");}return;}
@@ -90,11 +89,11 @@ if(form)form.addEventListener("submit",e=>{
  try{sessionStorage.setItem("western_pending_lead",String(Date.now()));}catch(_){}
  if(feedback){feedback.classList.remove("error");feedback.textContent="Submitting your project request…";}
  const button=form.querySelector("[type=submit]");if(button){button.disabled=true;button.textContent="Submitting…";}
- if(verifiedIntakeTest){
+ if(verifiedIntakeEnabled){
   const thisToken=testToken;
   window.setTimeout(()=>{
    if(testConfirmed||thisToken!==testToken)return;
-   if(feedback){feedback.textContent="The test submission was not confirmed. Check the lead email or sheet before trying again. If the Google Apps Script has not been redeployed, it cannot return a verified acknowledgement.";feedback.classList.add("error");}
+   if(feedback){feedback.textContent="We could not confirm the submission. Please contact us directly or check with our office before trying again to avoid duplicate requests.";feedback.classList.add("error");}
    const button=form.querySelector("[type=submit]");
    if(button){button.disabled=false;button.textContent="Retry submission";}
   },15000);
