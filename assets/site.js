@@ -8,6 +8,22 @@
   var f=d.getElementsByTagName(s)[0];f.parentNode.insertBefore(j,f);
 })(window,document,"script","https://bzrcdn.openai.com/sdk/oaiq.min.js");
 window.oaiq("init",{pixelId:"6AaXbGXgDzrjwCavuopa5S"});
+ // Western GA4. Tag Manager is installed separately; use this explicit Google
+ // tag to ensure Western has page-view and saved-lead event measurement.
+ // Do not add a second GA4 page-view tag for this same stream in GTM.
+ const westernGa4Id="G-RV64BEFKF2";
+ window.dataLayer=window.dataLayer||[];
+ window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};
+ if(!document.querySelector('script[data-western-ga4]')){
+  const ga4Script=document.createElement("script");
+  ga4Script.async=true;
+  ga4Script.src="https://www.googletagmanager.com/gtag/js?id="+encodeURIComponent(westernGa4Id);
+  ga4Script.setAttribute("data-western-ga4","1");
+  document.head.appendChild(ga4Script);
+ }
+ window.gtag("js",new Date());
+ window.gtag("config",westernGa4Id);
+
 const toggle=document.querySelector(".menu-toggle"),nav=document.querySelector(".navlinks");
 if(toggle&&nav)toggle.addEventListener("click",()=>{const open=nav.classList.toggle("open");toggle.setAttribute("aria-expanded",String(open));});
 // Preserve ad-source parameters while a visitor moves between site pages.
@@ -103,8 +119,8 @@ if(form)form.addEventListener("submit",e=>{
 document.querySelectorAll(".logo > svg").forEach(el=>{const im=document.createElement("img");im.src=el.closest(".footer")?"/assets/logo-symbol-reversed.svg":"/assets/logo-symbol.svg";im.alt="Western Electrical Engineering lightning W";im.width=51;im.height=51;el.replaceWith(im);});
 document.querySelectorAll('a[href^="mailto:proposals@westernengineer.com"]').forEach(a=>{a.href="mailto:casey@westernengineer.com";if(a.textContent.trim()==="proposals@westernengineer.com")a.textContent="casey@westernengineer.com";});
 document.querySelectorAll('link[rel="icon"]').forEach(a=>a.href="/assets/brand-favicon.svg");
-document.querySelectorAll('a[href^="tel:"]').forEach(a=>a.addEventListener("click",()=>{window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:"western_phone_click"});}));
-document.querySelectorAll('a[href^="mailto:"]').forEach(a=>a.addEventListener("click",()=>{window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:"western_email_click"});}));
+document.querySelectorAll('a[href^="tel:"]').forEach(a=>a.addEventListener("click",()=>{window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:"western_phone_click"});window.gtag("event","click_to_call",{send_to:westernGa4Id,contact_method:"phone"});}));
+document.querySelectorAll('a[href^="mailto:"]').forEach(a=>a.addEventListener("click",()=>{window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:"western_email_click"});window.gtag("event","click_to_email",{send_to:westernGa4Id,contact_method:"email"});}));
 
 // A confirmed Apps Script acknowledgement is required for a lead conversion;
 // a bare visit to thanks.html or a form submit attempt is insufficient.
@@ -117,6 +133,7 @@ if(location.pathname.replace(/\/+$/,"").endsWith("/thanks.html")){
   window.oaiq("measure","lead_created",{type:"customer_action"});
   window.dataLayer=window.dataLayer||[];
   window.dataLayer.push({event:"western_lead_form_confirmation",form_name:"proposal_request"});
+  window.gtag("event","generate_lead",{send_to:westernGa4Id,form_name:"western_proposal_request",lead_source:"website"});
  }
 }
 })();
