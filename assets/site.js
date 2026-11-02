@@ -61,6 +61,9 @@ if(form)form.addEventListener("submit",e=>{
  document.getElementById("lead-city").value=v("address")||v("state");
  const source=attributionKeys.filter(k=>attribution[k]).map(k=>k+": "+attribution[k]).join("\n");
  if(verifiedIntakeTest){
+  // Route only explicit validation requests to the newly deployed Apps Script.
+  // Production traffic remains on the known-working shared intake endpoint.
+  form.action="https://script.google.com/macros/s/AKfycbyzoTmhY30MNzPnFrC6DuP9GEuZZdUHW3nsk6rYPwORkaq8-mszZd9s9yS-yVhkkDRQlw/exec";
   form.target="western-verified-intake-frame";
   const bytes=new Uint8Array(16);
   if(!window.crypto||!window.crypto.getRandomValues){e.preventDefault();if(feedback){feedback.textContent="Secure browser support is required to run this test.";feedback.classList.add("error");}return;}
