@@ -1,4 +1,13 @@
 (()=>{
+// ChatGPT Ads Pixel. Production mode; SDK loads asynchronously on each Western page.
+(function(w,d,s,u){
+  if(w.oaiq)return;
+  var q=function(){q.q.push(arguments)};q.q=[];
+  w.oaiq=q;
+  var j=d.createElement(s);j.async=1;j.src=u;
+  var f=d.getElementsByTagName(s)[0];f.parentNode.insertBefore(j,f);
+})(window,document,"script","https://bzrcdn.openai.com/sdk/oaiq.min.js");
+window.oaiq("init",{pixelId:"6AaXbGXgDzrjwCavuopa5S"});
 const toggle=document.querySelector(".menu-toggle"),nav=document.querySelector(".navlinks");
 if(toggle&&nav)toggle.addEventListener("click",()=>{const open=nav.classList.toggle("open");toggle.setAttribute("aria-expanded",String(open));});
 // Preserve ad-source parameters while a visitor moves between site pages.
@@ -35,6 +44,10 @@ if(form)form.addEventListener("submit",e=>{
   "Project type: "+v("service"),"Location: "+v("address"),"Deadline: "+v("deadline"),
   "Budget: "+v("budget"),"Project scope: "+v("description"),"Traffic: "+(source||"Unspecified")
  ].join("\n");
+ // Mark the pending submission so conversion can be reported only after a return to
+ // the first-party confirmation page. The external Google Apps Script intake
+ // currently responds on script.google.com, so this alone does NOT verify success.
+ try{sessionStorage.setItem("western_pending_lead",String(Date.now()));}catch(_){}
  if(feedback){feedback.classList.remove("error");feedback.textContent="Submitting your project request…";}
  const button=form.querySelector("[type=submit]");if(button){button.disabled=true;button.textContent="Submitting…";}
  window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:"western_form_submit_attempt"});
@@ -44,4 +57,18 @@ document.querySelectorAll('a[href^="mailto:proposals@westernengineer.com"]').for
 document.querySelectorAll('link[rel="icon"]').forEach(a=>a.href="/assets/brand-favicon.svg");
 document.querySelectorAll('a[href^="tel:"]').forEach(a=>a.addEventListener("click",()=>{window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:"western_phone_click"});}));
 document.querySelectorAll('a[href^="mailto:"]').forEach(a=>a.addEventListener("click",()=>{window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:"western_email_click"});}));
+
+// Only a completed first-party thank-you visit can generate a conversion.
+// We intentionally do not count a form Submit click as a completed lead.
+if(location.pathname.replace(/\/+$/,"").endsWith("/thanks.html")){
+ let pending=0;
+ try{pending=Number(sessionStorage.getItem("western_pending_lead")||"0");}catch(_){}
+ const elapsed=Date.now()-pending;
+ if(pending>0&&elapsed>=0&&elapsed<=15*60*1000){
+  try{sessionStorage.removeItem("western_pending_lead");}catch(_){}
+  window.oaiq("measure","lead_created",{type:"customer_action"});
+  window.dataLayer=window.dataLayer||[];
+  window.dataLayer.push({event:"western_lead_form_confirmation",form_name:"proposal_request"});
+ }
+}
 })();
